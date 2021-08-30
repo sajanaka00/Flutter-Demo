@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_database/ui/firebase_animated_list.dart';
 
 void main() {
   runApp(MyApp());
@@ -10,6 +12,13 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyApp> {
+  final dbRef = FirebaseDatabase.instance.reference();
+
+  TextEditingController accNumController = new TextEditingController();
+  TextEditingController receiverAccNumController = new TextEditingController();
+  TextEditingController reEnterReceiverAccNumController = new TextEditingController();
+  TextEditingController amountController = new TextEditingController();
+
   bool checkboxValue = false;
 
   @override
@@ -71,6 +80,7 @@ class _MyHomePageState extends State<MyApp> {
                         Text("Account Number", style: TextStyle(fontSize: 14.0),),
                         SizedBox(height: 10),
                         TextField(
+                          controller: accNumController,
                           decoration: InputDecoration(
                             border: OutlineInputBorder(),
                             hintText: '67588881',
@@ -83,10 +93,18 @@ class _MyHomePageState extends State<MyApp> {
                         Text("Receiver Account Number", style: TextStyle(fontSize: 14.0),),
                         SizedBox(height: 10),
                         TextField(
+                          controller: receiverAccNumController,
                           decoration: InputDecoration(
                             border: OutlineInputBorder(),
                             hintText: 'Receiver Account Number',
-                            prefixText: '675',
+                            // prefixText: '675',
+                              prefixIcon: Container(
+                                color: Colors.black12,
+                                child: Container(
+                                  margin: EdgeInsets.all(15),
+                                  child: Text("675"),
+                                ),
+                              ),
                             isDense: true,
                               contentPadding: EdgeInsets.all(15),
                               prefixStyle: TextStyle(backgroundColor: Colors.black12),
@@ -97,10 +115,17 @@ class _MyHomePageState extends State<MyApp> {
                         Text("Re-Enter Receiver Account Number", style: TextStyle(fontSize: 14.0),),
                         SizedBox(height: 10),
                         TextField(
+                          controller: reEnterReceiverAccNumController,
                           decoration: InputDecoration(
                             border: OutlineInputBorder(),
                             hintText: 'Receiver Account Number',
-                            prefixText: '675',
+                            prefixIcon: Container(
+                              color: Colors.black12,
+                              child: Container(
+                                margin: EdgeInsets.all(15),
+                                child: Text("675"),
+                              ),
+                            ),
                             isDense: true,
                               contentPadding: EdgeInsets.all(15),
                               prefixStyle: TextStyle(backgroundColor: Colors.black12),
@@ -111,6 +136,7 @@ class _MyHomePageState extends State<MyApp> {
                         Text("Amount", style: TextStyle(fontSize: 14.0),),
                         SizedBox(height: 10),
                         TextField(
+                          controller: amountController,
                           decoration: InputDecoration(
                             border: OutlineInputBorder(),
                             hintText: 'Amount',
@@ -146,7 +172,9 @@ class _MyHomePageState extends State<MyApp> {
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10)
                               ),
-                              onPressed: () {},
+                              onPressed: () {
+                                proceedData();
+                              },
                               color: Colors.blue,
                             ),
                           ),
@@ -162,4 +190,22 @@ class _MyHomePageState extends State<MyApp> {
       ),
     );
   }
+
+  void proceedData() {
+    dbRef.child("1").set({
+      'Account Number': accNumController.text,
+      'Receiver Account Number': '675' + receiverAccNumController.text,
+      'Amount': amountController.text
+    });
+
+    clearTextInput();
+  }
+
+  void clearTextInput() {
+    accNumController.clear();
+    receiverAccNumController.clear();
+    reEnterReceiverAccNumController.clear();
+    amountController.clear();
+  }
+
 }

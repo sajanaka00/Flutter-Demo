@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 void main() {
   runApp(MyApp());
@@ -13,6 +13,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyApp> {
+
   final dbRef = FirebaseDatabase.instance.reference();
 
   TextEditingController accNumController = new TextEditingController();
@@ -84,7 +85,8 @@ class _MyHomePageState extends State<MyApp> {
                             SizedBox(height: 10),
                             TextField(
                               controller: accNumController,
-
+                              keyboardType: TextInputType.number,
+                              maxLength: 8,
                               decoration: InputDecoration(
                                 border: OutlineInputBorder(),
                                 hintText: '67588881',
@@ -93,12 +95,12 @@ class _MyHomePageState extends State<MyApp> {
                                 hintStyle: TextStyle(fontSize: 14.0)
                               ),
                             ),
-                            SizedBox(height: 15),
                             Text("Receiver Account Number", style: TextStyle(fontSize: 14.0),),
                             SizedBox(height: 10),
                             TextField(
                               controller: receiverAccNumController,
-
+                              keyboardType: TextInputType.number,
+                              maxLength: 5,
                               decoration: InputDecoration(
                                 border: OutlineInputBorder(),
                                 hintText: 'Receiver Account Number',
@@ -116,12 +118,12 @@ class _MyHomePageState extends State<MyApp> {
                                   hintStyle: TextStyle(fontSize: 14.0)
                               ),
                             ),
-                            SizedBox(height: 15),
                             Text("Re-Enter Receiver Account Number", style: TextStyle(fontSize: 14.0),),
                             SizedBox(height: 10),
                             TextField(
                               controller: reEnterReceiverAccNumController,
-
+                              keyboardType: TextInputType.number,
+                              maxLength: 5,
                               decoration: InputDecoration(
                                 border: OutlineInputBorder(),
                                 hintText: 'Receiver Account Number',
@@ -138,11 +140,11 @@ class _MyHomePageState extends State<MyApp> {
                                   hintStyle: TextStyle(fontSize: 14.0)
                               ),
                             ),
-                            SizedBox(height: 15),
                             Text("Amount", style: TextStyle(fontSize: 14.0),),
                             SizedBox(height: 10),
                             TextField(
                               controller: amountController,
+                              keyboardType: TextInputType.number,
                               decoration: InputDecoration(
                                 border: OutlineInputBorder(),
                                 hintText: 'Amount',
@@ -179,7 +181,7 @@ class _MyHomePageState extends State<MyApp> {
                                       borderRadius: BorderRadius.circular(10)
                                   ),
                                   onPressed: () {
-                                    proceedData();
+                                    validateAccNum();
                                   },
                                   color: Colors.blue,
                                 ),
@@ -199,6 +201,72 @@ class _MyHomePageState extends State<MyApp> {
     );
   }
 
+  void validateAccNum() {
+    if (accNumController.text.length == 8 && accNumController.text.isNotEmpty) {
+      validateReceiverAccNum();
+    } else {
+      Fluttertoast.showToast(
+          msg: "Enter a valid Account Number",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.blue,
+          textColor: Colors.white,
+          fontSize: 16.0
+      );
+      accNumController.clear();
+    }
+  }
+
+  void validateReceiverAccNum() {
+    if(receiverAccNumController.text == reEnterReceiverAccNumController.text) {
+      validateAmount();
+    } else {
+      Fluttertoast.showToast(
+          msg: "Re-entered Account Number Mismatched",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.blue,
+          textColor: Colors.white,
+          fontSize: 16.0
+      );
+      reEnterReceiverAccNumController.clear();
+    }
+  }
+
+  void validateAmount() {
+    if(amountController.text.isNotEmpty) {
+      validateCheckbox();
+    } else {
+      Fluttertoast.showToast(
+          msg: "Enter a valid Amount",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.blue,
+          textColor: Colors.white,
+          fontSize: 16.0
+      );
+    }
+  }
+
+  void validateCheckbox() {
+    if(checkboxValue == true) {
+      proceedData();
+    } else {
+      Fluttertoast.showToast(
+          msg: "Indicate that you agree to the Terms and Conditions",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.blue,
+          textColor: Colors.white,
+          fontSize: 16.0
+      );
+    }
+  }
+
   void proceedData() {
     dbRef.child("1").set({
       'Account Number': accNumController.text,
@@ -215,7 +283,5 @@ class _MyHomePageState extends State<MyApp> {
     reEnterReceiverAccNumController.clear();
     amountController.clear();
   }
-
-
 
 }

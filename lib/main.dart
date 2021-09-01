@@ -268,7 +268,7 @@ class _MyHomePageState extends State<MyApp> {
   }
 
   void proceedData() {
-    dbRef.child("1").set({
+    dbRef.child(accNumController.text).set({
       'Account Number': accNumController.text,
       'Receiver Account Number': '675' + receiverAccNumController.text,
       'Amount': amountController.text

@@ -18,7 +18,9 @@ class MyApp extends StatelessWidget {
   }
 // _MyHomePageState createState() => _MyHomePageState();
 }
+
 final dbRef = FirebaseDatabase.instance.reference();
+String retrieveAccNum = "";
 
 class HomeScreen extends StatelessWidget {
 
@@ -91,7 +93,7 @@ class HomeScreen extends StatelessWidget {
                                 ElevatedButton(
                                   child: const Text('Retrieve Data'),
                                   onPressed: () {
-                                    _navigateToNextScreen(context);
+                                    _navigateToRetrieveDataScreen(context);
                                   },
                                 ),
                                 SizedBox(height: 20),
@@ -215,9 +217,8 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-
-  void _navigateToNextScreen(BuildContext context) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (context) => NewScreen()));
+  void _navigateToRetrieveDataScreen(BuildContext context) {
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => RetrieveDataScreen()));
   }
 
   void validateAccNum() {
@@ -305,14 +306,28 @@ class HomeScreen extends StatelessWidget {
 
 }
 
-class NewScreen extends StatelessWidget {
+class RetrieveDataScreen extends StatelessWidget {
+
+  // setState(() {});
 
   List<Map<dynamic, dynamic>> items = [];
+  String accNum = "";
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Retrieve Data')),
+      appBar: AppBar(
+        title: Text('Retrieve Data'),
+        leading: new IconButton(
+          icon: new Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => HomeScreen()),
+            );
+          },
+        ),
+      ),
       body: Center(
         child: FutureBuilder(
             future: dbRef.once(), // this will retrieve the data only once
@@ -331,26 +346,32 @@ class NewScreen extends StatelessWidget {
                 values.forEach((key, values) {
                   items.add(values);
                 });
-                
+
                 return new ListView.builder(
                     shrinkWrap: true,
                     itemCount: items.length,
                     itemBuilder: (BuildContext context, int index) {
-                      print(items[index]["accNumber"]);
                       return Card(
                         elevation: 8.0,
                         margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
                         color: Colors.blue,
-                        child: Container(
-                          margin: EdgeInsets.all(15),
-                          // decoration: BoxDecoration(color: Colors.blue),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text("Account Number: " + items[index]["accNumber"], style: TextStyle(color: Colors.white, fontSize: 16)),
-                              Text("Amount: "+ items[index]["amount"], style: TextStyle(color: Colors.white, fontSize: 16)),
-                              Text("Receiver Account Number: " +items[index]["receiverAccNumber"], style: TextStyle(color: Colors.white, fontSize: 16)),
-                            ],
+                        child: GestureDetector(
+                          onTap: () {
+                            accNum = items[index]["accNumber"];
+                            _navigateToUpdateDataScreen(context);
+                          },
+                          child: Container(
+                            margin: EdgeInsets.all(15),
+                            // decoration: BoxDecoration(color: Colors.blue),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                // retrieveAccNum = items[index]["accNumber"],
+                                Text("Account Number: " + items[index]["accNumber"], style: TextStyle(color: Colors.white, fontSize: 16)),
+                                Text("Amount: "+ items[index]["amount"], style: TextStyle(color: Colors.white, fontSize: 16)),
+                                Text("Receiver Account Number: " +items[index]["receiverAccNumber"], style: TextStyle(color: Colors.white, fontSize: 16)),
+                              ],
+                            ),
                           ),
                         ),
                       );
@@ -361,5 +382,229 @@ class NewScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _navigateToUpdateDataScreen(BuildContext context) {
+    String returnAccNum = accNum;
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => UpdateDataScreen(text: returnAccNum,)));
+  }
   
+}
+
+class UpdateDataScreen extends StatelessWidget {
+
+  String text;
+  UpdateDataScreen({Key key, @required this.text}) : super(key: key);
+  List<Map<dynamic, dynamic>> updateDataItems = [];
+
+  TextEditingController updateAccNumController = new TextEditingController();
+  TextEditingController updateReceiverAccNumController = new TextEditingController();
+  TextEditingController updateAmountController = new TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Update & Delete Data'),
+        leading: new IconButton(
+          icon: new Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => RetrieveDataScreen()),
+            );
+          },
+        ),
+      ),
+      body: Stack(
+        children: <Widget>[
+          FutureBuilder(
+            future: dbRef.orderByKey().equalTo(text).once(),
+              builder: (context, AsyncSnapshot<DataSnapshot> snapshot) {
+                if (snapshot.hasData) {
+                  updateDataItems.clear();
+
+                  // value - retrieve the whole returned data
+                  Map<dynamic, dynamic> values = snapshot.data.value;
+
+                  // iterate and add the property values to the list.
+                  values.forEach((key, values) {
+                    updateDataItems.add(values);
+                  });
+
+                  return new ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: updateDataItems.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return Card(
+                          elevation: 8.0,
+                          margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                          color: Colors.blue,
+                          child: Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text("Account Number: " + updateDataItems[index]["accNumber"], style: TextStyle(color: Colors.white, fontSize: 16)),
+                                Text("Amount: "+ updateDataItems[index]["amount"], style: TextStyle(color: Colors.white, fontSize: 16)),
+                                Text("Receiver Account Number: " +updateDataItems[index]["receiverAccNumber"], style: TextStyle(color: Colors.white, fontSize: 16)),
+                              ],
+                            ),
+                          ),
+                        );
+                      });
+                }
+                return CircularProgressIndicator();
+              }),
+          Container(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                  top: 120,
+                  bottom: 35,
+                  left: 25,
+                  right: 25
+              ),
+              child: Material(
+                elevation: 10.0,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(25.0),
+                  child: ListView(
+                      children: <Widget>[
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            SizedBox(height: 20),
+                            Text("Account Number", style: TextStyle(fontSize: 14.0),),
+                            SizedBox(height: 10),
+                            TextField(
+                              controller: updateAccNumController,
+                              keyboardType: TextInputType.number,
+                              maxLength: 8,
+                              decoration: InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  hintText: '67588881',
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.all(12),
+                                  hintStyle: TextStyle(fontSize: 14.0)
+                              ),
+                            ),
+                            Text("Receiver Account Number", style: TextStyle(fontSize: 14.0),),
+                            SizedBox(height: 10),
+                            TextField(
+                              controller: updateReceiverAccNumController,
+                              keyboardType: TextInputType.number,
+                              maxLength: 5,
+                              decoration: InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  hintText: 'Receiver Account Number',
+                                  // prefixText: '675',
+                                  prefixIcon: Container(
+                                    color: Colors.black12,
+                                    child: Container(
+                                      margin: EdgeInsets.all(15),
+                                      child: Text("675"),
+                                    ),
+                                  ),
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.all(15),
+                                  prefixStyle: TextStyle(backgroundColor: Colors.black12),
+                                  hintStyle: TextStyle(fontSize: 14.0)
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                            Text("Amount", style: TextStyle(fontSize: 14.0),),
+                            SizedBox(height: 10),
+                            TextField(
+                              controller: updateAmountController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  hintText: 'Amount',
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.all(12),
+                                  hintStyle: TextStyle(fontSize: 14.0)
+                              ),
+                            ),
+                            SizedBox(height: 15),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.only(top: 16.0),
+                                  child: SizedBox(
+                                    width: MediaQuery.of(context).size.width * 0.35,
+                                    height: 45,
+                                    child: RaisedButton(
+                                      child: Text("Update", style: TextStyle(color: Colors.white, fontSize: 16)),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10)
+                                      ),
+                                      color: Colors.blue,
+                                      onPressed: () {
+                                        updateData();
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 15),
+                                Container(
+                                  padding: EdgeInsets.only(top: 16.0),
+                                  child: SizedBox(
+                                    width: MediaQuery.of(context).size.width * 0.35,
+                                    height: 45,
+                                    child: RaisedButton(
+                                      child: Text("Delete", style: TextStyle(color: Colors.white, fontSize: 16)),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10)
+                                      ),
+                                      color: Colors.blue,
+                                      onPressed: () {
+                                        deleteData();
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ]
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ]
+      ),
+    );
+  }
+
+  void updateData() {
+    dbRef.child(text).update({
+      'accNumber': updateAccNumController.text
+    });
+    dbRef.child(text).update({
+      'receiverAccNumber': '675' + updateReceiverAccNumController.text
+    });
+    dbRef.child(text).update({
+      'amount': updateAmountController.text
+    });
+  }
+
+  void deleteData() {
+    dbRef.child(text).remove().then((_) {
+      Fluttertoast.showToast(
+          msg: "Record has been successfully deleted",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.blue,
+          textColor: Colors.white,
+          fontSize: 16.0
+      );
+    });
+  }
+
 }
